@@ -5,8 +5,12 @@ function createApplication () {
         // app.handler(req, res, next)
         console.log(111)
     }
-    app.prototype = proto
-    console.log(app.prototype)
+    Object.keys(proto).forEach(key => {
+        if (!app[key]) {
+            app[key] = proto[key]
+        }
+    })
+    console.log(app)
     return app
 }
 

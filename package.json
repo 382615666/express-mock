@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "serve": "node index.js"
+    "serve": "node index.js",
+    "debug": "node debug.js"
   },
   "repository": {
     "type": "git",
@@ -16,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/382615666/express-mock/issues"
   },
-  "homepage": "https://github.com/382615666/express-mock#readme"
+  "homepage": "https://github.com/382615666/express-mock#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
