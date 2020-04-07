@@ -4,9 +4,11 @@ function Layer (path, handle) {
     this.handle = handle
 }
 
-Layer.prototype.handle_request = function (req, res) {
-    if (this.handle) {
-        this.handle(req, res)
+Layer.prototype.handle_request = function (req, res, next) {
+    try {
+        this.handle(req, res, next);
+    } catch (err) {
+        next(err);
     }
 }
 
