@@ -1,19 +1,32 @@
 const http = require('http')
-const Router = require('./router/index')
+const router = require('./router')
 
-function listen () {
+function application () {
+    this._router = new router()
+}
+
+application.prototype.listen = function listen () {
     const server = http.createServer((req, res) => {
-        this._router.handle(req, res)
+        this.handler(req, res)
     })
+
     server.listen.apply(server, arguments)
 }
 
-const app = {
-    _router: new Router(),
-    get (path, handle) {
-        this._router.get(path, handle)
-    },
-    listen
+application.prototype.handler = function handler (req, res) {
+    function handler (err) {
+        res.writeHead(200, {
+            'content-type': 'text/plain'
+        })
+        res.end(`404: ${err}`)
+    }
+    this._router.handler(req, res, err)
 }
+http.METHODS.forEach(method => {
+    method = method.toLowerCase()
+    application.prototype[method] = function (path, fn) {
+        this._router[method](path, fn)
+    }
+})
 
-exports = module.exports = app
+exports = module.exports = application

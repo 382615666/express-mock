@@ -1,37 +1,48 @@
-const Layer = require('./layer')
-const Route = require('./route')
+const http = require('http')
+const route = require('./route')
+const layer = require('./layer')
 
-function Router () {
+function router () {
     this.stack = []
 }
 
-Router.prototype.get = function (path, handle) {
-    this.stack.push(new Layer(path, handle))
-}
-
-Router.prototype.route = function (path) {
-    const route = new Route(path)
-    const layer = new Layer(path, (req, res) => {
-        route.dispatch(req, res)
+router.prototype.route = function (path) {
+    const r = new route(path)
+    const l = new layer(path ,(req, res) => {
+        r.dispatch(req, res)
     })
-    layer.route = route
-    this.stack.push(layer)
-
-    return route
+    l.route = r
+    this.stack.push(l)
+    return r
 }
 
-Router.prototype.handle = function (req, res) {
-    this.stack.forEach(item => {
-        if (item.match(req.url) && item.route && item.route.handle_method(req.method)) {
-            item.handle_request(req, res)
+router.prototype.handler = function handler (req, res, done) {
+    const stack = this.stack
+    let index = 0
+
+    function next (err) {
+        if (i >= stack.length) {
+            return done(err)
         }
-    })
+        const l = stack[i++]
+        if (l.match(req.url) && l.route.handlerMethod(req.method)) {
+            l.handler(req, res, next)
+        } else {
+            next(err)
+        }
+    }
+    next()
 }
 
-Router.prototype.get = function (path, fn) {
-    const route = this.route(path)
-    route.get(fn)
-    return this
-}
+http.METHODS.forEach(method => {
+    method = method.toLowerCase()
+    router.prototype[method] = function (path, fn) {
+        this.route(path)[method](fn)
+        return this
+    }
+})
 
-exports = module.exports = Router
+
+
+
+exports = module.exports = router

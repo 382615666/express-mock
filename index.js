@@ -1,12 +1,12 @@
-const express = require('./express') 
+const express = require('./express')
 
 const app = express()
 
-app.get('/', (req,res) => {
+app.get('/test', (req, res) => {
     res.writeHead(200, {
         'content-type': 'text/plain'
     })
-    res.end('hi')
+    res.end('/test')
 })
 
 app.listen(3000, () => {

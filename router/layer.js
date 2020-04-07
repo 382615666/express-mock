@@ -1,17 +1,19 @@
 
-function Layer (path, handle) {
+function layer (path, fn) {
     this.path = path
-    this.handle = handle
+    this.fn = fn
 }
 
-Layer.prototype.handle_request = function (req, res) {
-    if (this.handle) {
-        this.handle(req, res)
+layer.prototype.match = function match (url) {
+    return this.path === url
+}
+
+layer.prototype.handler = function handler (req, res, next) {
+    try {
+        this.fn(req, res, next)
+    } catch (error) {
+        next(error)
     }
 }
 
-Layer.prototype.match = function (path) {
-    return this.path === path
-}
-
-exports = module.exports = Layer
+exports = module.exports = layer
