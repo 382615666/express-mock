@@ -8,9 +8,7 @@ function router () {
 
 router.prototype.route = function (path) {
     const r = new route(path)
-    const l = new layer(path ,(req, res) => {
-        r.dispatch(req, res)
-    })
+    const l = new layer(path, r.dispatch.bind(r))
     l.route = r
     this.stack.push(l)
     return r
@@ -21,17 +19,31 @@ router.prototype.handler = function handler (req, res, done) {
     let index = 0
 
     function next (err) {
-        if (i >= stack.length) {
+        if (index >= stack.length) {
             return done(err)
         }
-        const l = stack[i++]
-        if (l.match(req.url) && l.route.handlerMethod(req.method)) {
-            l.handler(req, res, next)
+        if (err) {
+            return done(err)
+        }
+        const l = stack[index++]
+        if (l.match(req.url) && l.route && l.route.handlerMethod(req.method)) {
+            return l.handler(req, res, next)
         } else {
             next(err)
         }
     }
     next()
+}
+
+router.prototype.use = function use (fn) {
+    let path = '/'
+    if (typeof fn !== 'function') {
+        path = fn
+        fn = arguments[1]
+    }
+    const l = new layer(path, fn)
+    this.stack.push(l)
+    return this
 }
 
 http.METHODS.forEach(method => {

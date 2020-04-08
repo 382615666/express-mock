@@ -9,9 +9,22 @@ function route (path) {
 
 route.prototype.dispatch = function dispatch (req, res, done) {
     const stack = this.stack
+    const _this = this
     let index = 0
     function next (err) {
-        
+        if (index >= stack.length) {
+            return done(err)
+        }
+
+        const l = stack[index++]
+        if (req.method.toLowerCase() !== l.method) {
+            return done(err)
+        }
+        if (err) {
+            return l.handlerError(err, req, res, next)
+        } else {
+            return l.fn(req, res, next)
+        }
     }
     next()
 }
@@ -24,7 +37,8 @@ http.METHODS.forEach(method => {
     method = method.toLowerCase()
     route.prototype[method] = function (fn) {
         const l = new layer('/', fn)
-        this.method[method] = method
+        l.method = method
+        this.method[method] = true
         this.stack.push(l)
     }
 })
