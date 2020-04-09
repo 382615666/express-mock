@@ -2,11 +2,16 @@ const http = require('http')
 const route = require('./route')
 const layer = require('./layer')
 
-function router () {
-    this.stack = []
+function proto () {
+    function router (req, res, next) {
+        router.handler(req, res, next)
+    }
+    Object.setPrototypeOf(router, proto)
+    router.stack = []
+    return router
 }
 
-router.prototype.route = function (path) {
+proto.route = function (path) {
     const r = new route(path)
     const l = new layer(path, r.dispatch.bind(r))
     l.route = r
@@ -14,7 +19,7 @@ router.prototype.route = function (path) {
     return r
 }
 
-router.prototype.handler = function handler (req, res, done) {
+proto.handler = function handler (req, res, done) {
     const stack = this.stack
     let index = 0
 
@@ -26,8 +31,12 @@ router.prototype.handler = function handler (req, res, done) {
             return done(err)
         }
         const l = stack[index++]
-        if (l.match(req.url) && l.route && l.route.handlerMethod(req.method)) {
-            return l.handler(req, res, next)
+        if (l.match(req.url)) {
+            if (!l.route) {
+                return l.handler(req, res, next)
+            } else if (l.route.handlerMethod(req.method)) {
+                return l.handler(req, res, next)
+            }
         } else {
             next(err)
         }
@@ -35,7 +44,7 @@ router.prototype.handler = function handler (req, res, done) {
     next()
 }
 
-router.prototype.use = function use (fn) {
+proto.use = function use (fn) {
     let path = '/'
     if (typeof fn !== 'function') {
         path = fn
@@ -48,7 +57,7 @@ router.prototype.use = function use (fn) {
 
 http.METHODS.forEach(method => {
     method = method.toLowerCase()
-    router.prototype[method] = function (path, fn) {
+    proto[method] = function (path, fn) {
         this.route(path)[method](fn)
         return this
     }
@@ -57,4 +66,4 @@ http.METHODS.forEach(method => {
 
 
 
-exports = module.exports = router
+exports = module.exports = proto

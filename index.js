@@ -2,6 +2,10 @@ const express = require('./express')
 
 const app = express()
 
+app.use('/use', (req, res, next) => {
+    next()
+})
+
 app.get('/test', (req, res, next) => {
     next()
 }).get('/test', (req, res) => {
