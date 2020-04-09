@@ -1,19 +1,31 @@
 
-function Layer (path, handle) {
+function layer (path, fn) {
     this.path = path
-    this.handle = handle
+    this.fn = fn
 }
 
-Layer.prototype.handle_request = function (req, res, next) {
+layer.prototype.match = function match (url) {
+    return this.path === url
+}
+
+layer.prototype.handler = function handler (req, res, next) {
     try {
-        this.handle(req, res, next);
-    } catch (err) {
-        next(err);
+        this.fn(req, res, next)
+    } catch (error) {
+        console.log(error)
+        next(error)
     }
 }
 
-Layer.prototype.match = function (path) {
-    return this.path === path
+layer.prototype.handlerError = function (err, req, res, next) {
+    if (this.fn.length !== 4) {
+        return next(err)
+    }
+    try {
+        this.fn(err, req, res, next)
+    } catch (error) {
+        next(error)
+    }
 }
 
-exports = module.exports = Layer
+exports = module.exports = layer

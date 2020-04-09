@@ -1,16 +1,13 @@
 const application = require('./application')
+const router = require('./router')
+function express () {
+    function app () {
+        app.handler.apply(app, arguments)
+    }
 
-function createApplication () {
-    // const app = function (req, res, next) {
-    //     // app.handler(req, res, next)
-    // }
-    // Object.keys(proto).forEach(key => {
-    //     if (!app[key]) {
-    //         app[key] = proto[key]
-    //     }
-    // })
-    const app = new application()
+    Object.setPrototypeOf(app, application)
     return app
 }
 
-exports = module.exports = createApplication
+exports = module.exports = express
+exports.router = module.exports.router = router

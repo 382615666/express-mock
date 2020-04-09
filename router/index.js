@@ -1,49 +1,69 @@
-const Layer = require('./layer')
-const Route = require('./route')
+const http = require('http')
+const route = require('./route')
+const layer = require('./layer')
 
-function Router () {
-    this.stack = []
+function proto () {
+    function router (req, res, next) {
+        router.handler(req, res, next)
+    }
+    Object.setPrototypeOf(router, proto)
+    router.stack = []
+    return router
 }
 
-Router.prototype.route = function (path) {
-    const route = new Route(path)
-    const layer = new Layer(path, route.dispatch.bind(route))
-    layer.route = route
-    this.stack.push(layer)
-
-    return route
+proto.route = function (path) {
+    const r = new route(path)
+    const l = new layer(path, r.dispatch.bind(r))
+    l.route = r
+    this.stack.push(l)
+    return r
 }
 
-Router.prototype.handle = function (req, res, done) {
-    const method = req.method
+proto.handler = function handler (req, res, done) {
     const stack = this.stack
     let index = 0
 
     function next (err) {
-        const layerError = (err === 'route' ? null : err);
-        if (layerError === 'router') {
-            return done(null)
+        if (index >= stack.length) {
+            return done(err)
         }
-        if (index >= stack.length || layerError) {
-            return done(layerError)
+        if (err) {
+            return done(err)
         }
-
-        const layer = stack[index++]
-
-        if (layer.match(req.url) && layer.route && layer.route.handle_method(req.method)) {
-            return layer.handle_request(req, res, next)
+        const l = stack[index++]
+        if (l.match(req.url)) {
+            if (!l.route) {
+                return l.handler(req, res, next)
+            } else if (l.route.handlerMethod(req.method)) {
+                return l.handler(req, res, next)
+            }
         } else {
-            next(layerError)
+            next(err)
         }
-
     }
     next()
 }
 
-Router.prototype.get = function (path, fn) {
-    const route = this.route(path)
-    route.get(fn)
+proto.use = function use (fn) {
+    let path = '/'
+    if (typeof fn !== 'function') {
+        path = fn
+        fn = arguments[1]
+    }
+    const l = new layer(path, fn)
+    this.stack.push(l)
     return this
 }
 
-exports = module.exports = Router
+http.METHODS.forEach(method => {
+    method = method.toLowerCase()
+    proto[method] = function (path, fn) {
+        this.route(path)[method](fn)
+        return this
+    }
+})
+
+
+
+
+exports = module.exports = proto
