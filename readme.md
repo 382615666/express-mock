@@ -72,4 +72,4 @@ client <- exp
 
 ### 参考资料
 
-[Express 源码仿制教程](https://wangzhechao.com/express_1/)
+* [Express 源码仿制教程](https://wangzhechao.com/express_1/)
